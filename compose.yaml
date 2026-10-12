@@ -1,0 +1,15 @@
+services:
+  frogfind:
+    build: .
+    ports:
+      - "8180:80"
+    depends_on:
+      - searxng
+    restart: unless-stopped
+
+  # Search backend. Not published to the host; FrogFind reaches it at http://searxng:8080
+  searxng:
+    build: ./searxng
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:?create .env first - see CLAUDE.md}
+    restart: unless-stopped

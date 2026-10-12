@@ -1,7 +1,7 @@
 <?php
+require_once('lib.php');
 
 $url = "";
-$filetype = "";
 $raw_image = NULL;
 
 //get the image url
@@ -11,19 +11,12 @@ if (isset( $_GET['i'] ) ) {
     exit();
 }
 
-//an image will start with http, anything else is sus
-if (substr( $url, 0, 4 ) != "http") {
+//safe_fetch() refuses anything that isn't a public http(s) address
+if (!$response = safe_fetch($url)) {
     exit();
 }
-
-//we can only do jpg and png here
-if (strpos($url, ".jpg") || strpos($url, ".jpeg") === true) {
-    $filetype = "jpg";
-    $raw_image = imagecreatefromjpeg($url);
-} elseif (strpos($url, ".png") === true) {
-    $filetype = "png";
-    $raw_image = imagecreatefrompng($url);
-} else {
+//GD sniffs the real format (jpg, png, gif, webp...) from the bytes
+if (!$raw_image = @imagecreatefromstring($response['body'])) {
     exit();
 }
 
@@ -40,13 +33,13 @@ if ($raw_imagex >= $raw_imagey) {
 
 $dest_image = imagecreatetruecolor($dest_imagex, $dest_imagey);
 
+//always output JPEG: the most compatible photo format for vintage browsers (Netscape 1.1+)
+//JPEG has no transparency, so paint a white background under transparent images
+imagefill($dest_image, 0, 0, imagecolorallocate($dest_image, 255, 255, 255));
+
 imagecopyresampled($dest_image, $raw_image, 0, 0, 0, 0, $dest_imagex, $dest_imagey, $raw_imagex, $raw_imagey);
 
-header('Content-type: image/' . $filetype); 
-if ($filetype = "jpg") {
-    imagejpeg($dest_image,NULL,80); //80% quality
-} elseif ($filetype = "png") {
-    imagepng($dest_image,NULL,8); //80% compression
-}
+header('Content-type: image/jpeg');
+imagejpeg($dest_image,NULL,80); //80% quality
 
 ?>

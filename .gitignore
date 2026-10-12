@@ -6,3 +6,6 @@ composer.phar
 /vendor/
 *.spc
 .DS_Store
+
+# local secrets (SEARXNG_SECRET)
+.env
